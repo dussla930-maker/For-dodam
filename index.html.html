@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>도담이 젠더리빌 복권</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #17262B;
+    --bg-reveal-girl: #4A2233;
+    --bg-reveal-boy: #1C2F52;
+    --paper: #FBF7EC;
+    --ink: #1D2B2F;
+    --ink-soft: #5E6B6E;
+    --red: #D8434B;
+    --girl: #FF86AC;
+    --boy: #5B9BFF;
+    --foil-a: #D9DDE0;
+    --foil-b: #9EA6AB;
+    --text-on-bg: #F3EEDF;
+    --font-display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --font-body: "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #17262B; --text-on-bg: #F3EEDF; }
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --bg: #E8E1CF; --text-on-bg: #1D2B2F; --bg-reveal-girl: #FFD9E5; --bg-reveal-boy: #D5E5FF; }
+  }
+  :root[data-theme="dark"] { --bg: #17262B; --text-on-bg: #F3EEDF; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text-on-bg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    transition: background-color 1.2s ease, color 1.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+  body.revealed-girl { background: var(--bg-reveal-girl); }
+  body.revealed-boy { background: var(--bg-reveal-boy); }
+
+  main {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 28px 18px 36px;
+  }
+
+  .intro { text-align: center; max-width: 360px; }
+  .intro h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(26px, 7.4vw, 34px);
+    line-height: 1.25;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .intro p { margin: 0; font-size: 15px; opacity: .8; }
+
+  /* Ticket */
+  .ticket {
+    position: relative;
+    width: min(100%, 360px);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 14px;
+    padding: 18px 20px 20px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    transform: rotate(-1.2deg);
+    transition: transform .8s cubic-bezier(.2,.8,.2,1);
+  }
+  body[class*="revealed"] .ticket { transform: rotate(0deg); }
+
+  .ticket-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 12px;
+    border-bottom: 2px dashed rgba(29,43,47,.25);
+  }
+  .ticket-head strong { font-family: var(--font-display); font-weight: 400; font-size: 20px; color: var(--red); }
+  .ticket-head span { font-size: 13px; color: var(--ink-soft); }
+
+  .prize-row { display: flex; justify-content: space-between; font-size: 14px; padding: 10px 0 12px; }
+  .prize-row b { font-family: var(--font-display); font-weight: 400; font-size: 15px; }
+
+  .scratch-wrap {
+    position: relative;
+    height: 190px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    border: 2px solid var(--ink);
+  }
+  .result {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    gap: 2px;
+    color: var(--ink);
+  }
+  .result .emoji { font-size: 40px; line-height: 1; }
+  .result .big { font-family: var(--font-display); font-size: 48px; line-height: 1.1; }
+  .result .sub { font-size: 15px; }
+  .result.girl { background: var(--girl); }
+  .result.boy { background: var(--boy); }
+
+  canvas#foil {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+    transition: opacity .7s ease;
+  }
+  canvas#foil.done { opacity: 0; pointer-events: none; }
+
+  .ticket-foot { margin-top: 12px; font-size: 13px; color: var(--ink-soft); text-align: center; }
+
+  /* Notches on the ticket sides */
+  .ticket::before, .ticket::after {
+    content: ""; position: absolute; top: 72px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--bg); transition: background-color 1.2s ease;
+  }
+  .ticket::before { left: -9px; }
+  .ticket::after { right: -9px; }
+  body.revealed-girl .ticket::before, body.revealed-girl .ticket::after { background: var(--bg-reveal-girl); }
+  body.revealed-boy .ticket::before, body.revealed-boy .ticket::after { background: var(--bg-reveal-boy); }
+
+  .after { text-align: center; max-width: 340px; min-height: 96px; }
+  .after .msg {
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .8s ease .5s, transform .8s ease .5s;
+  }
+  body[class*="revealed"] .after .msg { opacity: 1; transform: none; }
+  .after h2 { font-family: var(--font-display); font-weight: 400; font-size: 26px; margin: 0 0 6px; }
+  .after p { margin: 0; }
+
+  .skip, .replay {
+    background: none; border: 0; color: inherit; font: inherit; font-size: 14px;
+    text-decoration: underline; text-underline-offset: 3px;
+    opacity: .7; cursor: pointer; padding: 8px 12px;
+  }
+  .skip:hover, .replay:hover { opacity: 1; }
+  .skip:focus-visible, .replay:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 6px; }
+  .replay { display: none; }
+  body[class*="revealed"] .replay { display: inline-block; }
+  body[class*="revealed"] .skip { display: none; }
+
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: .01s !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="intro">
+    <h1 id="title"></h1>
+    <p id="lead"></p>
+  </header>
+
+  <section class="ticket" aria-label="젠더리빌 스크래치 복권">
+    <div class="ticket-head">
+      <strong>젠더리빌 복권</strong>
+      <span id="ticketNo">No.2026</span>
+    </div>
+    <div class="prize-row">
+      <span>도담이 출산 예정일은</span>
+      <b>2027년 4월</b>
+    </div>
+    <div class="scratch-wrap" id="scratchWrap">
+      <div class="result" id="result" aria-live="polite"></div>
+      <canvas id="foil" role="img" aria-label="긁어서 성별을 확인하는 영역"></canvas>
+    </div>
+    <p class="ticket-foot">손가락이나 마우스로 은박 부분을 긁어보세요</p>
+  </section>
+
+  <button class="skip" id="skipBtn" type="button">긁지 않고 바로 확인하기</button>
+
+  <section class="after" aria-live="polite">
+    <div class="msg">
+      <h2 id="afterTitle"></h2>
+      <p id="afterText"></p>
+      <button class="replay" id="replayBtn" type="button">다시 긁어보기</button>
+    </div>
+  </section>
+</main>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+/* ===================== 설정 (여기만 바꾸세요) ===================== */
+var CONFIG = {
+  // 'Z2lybA==' = 딸(girl) / 'Ym95' = 아들(boy)
+  secret: 'Z2lybA==',
+  family: '우리 가족',
+  babyNickname: '도담이',
+  dueDate: '',          // 예: '2027년 3월'  (비워두면 표시 안 함)
+  message: '많은 축하와 사랑 부탁드려요!'
+};
+/* =============================================================== */
+
+(function () {
+  var gender;
+  try { gender = atob(CONFIG.secret) === 'boy' ? 'boy' : 'girl'; } catch (e) { gender = 'girl'; }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var wrap = $('scratchWrap'), canvas = $('foil'), ctx = canvas.getContext('2d', { willReadFrequently: true });
+  var resultEl = $('result');
+  var revealed = false, started = false, drawing = false, lastX = 0, lastY = 0, lastCheck = 0;
+  var W = 0, H = 0, dpr = 1;
+
+  // 문구
+  $('title').textContent = CONFIG.babyNickname + ' 젠더리빌 복권';
+  $('lead').textContent = CONFIG.babyNickname + '의 성별이 은박 아래에 숨어 있어요. 직접 긁어서 확인해 주세요!';
+  if (CONFIG.dueDate) {
+    $('lead').textContent += ' (출산 예정: ' + CONFIG.dueDate + ')';
+  }
+
+  function fillResult() {
+    if (resultEl.dataset.ready) return;
+    var isGirl = gender === 'girl';
+    resultEl.className = 'result ' + gender;
+    resultEl.innerHTML =
+      '<div class="emoji">' + (isGirl ? '🎀' : '🚂') + '</div>' +
+      '<div class="big">' + (isGirl ? '딸입니다!' : '아들입니다!') + '</div>' +
+      '<div class="sub">' + (isGirl ? '공주님이 오고 있어요' : '왕자님이 오고 있어요') + '</div>';
+    resultEl.dataset.ready = '1';
+  }
+
+  /* ---------- 은박 그리기 ---------- */
+  function sizeCanvas() {
+    var r = wrap.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.round(r.width); H = Math.round(r.height);
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    paintFoil();
+  }
+
+  function paintFoil() {
+    ctx.globalCompositeOperation = 'source-over';
+    var g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#E3E6E8'); g.addColorStop(.35, '#A9B0B5');
+    g.addColorStop(.6, '#E9ECEE'); g.addColorStop(1, '#98A0A5');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    // 결 무늬
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1;
+    for (var i = -H; i < W; i += 7) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke();
+    }
+    // 잔 노이즈
+    for (var n = 0; n < 500; n++) {
+      ctx.fillStyle = 'rgba(' + (n % 2 ? '255,255,255' : '80,90,95') + ',' + (Math.random() * .18) + ')';
+      ctx.fillRect(Math.random() * W, Math.random() * H, 2, 2);
+    }
+    ctx.fillStyle = '#5A656A';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '400 30px "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.fillText('여기를 긁어보세요', W / 2, H / 2 - 12);
+    ctx.font = '400 15px "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.fillText('딸일까? 아들일까?', W / 2, H / 2 + 22);
+  }
+
+  /* ---------- 긁기 ---------- */
+  function pos(e) {
+    var r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function scratchLine(x1, y1, x2, y2) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineWidth = 38;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+  function cleared() {
+    var data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    var total = 0, clear = 0;
+    for (var i = 3; i < data.length; i += 4 * 40) { total++; if (data[i] < 20) clear++; }
+    return clear / total;
+  }
+
+  canvas.addEventListener('pointerdown', function (e) {
+    if (revealed) return;
+    fillResult();
+    started = true; drawing = true;
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    var p = pos(e); lastX = p.x; lastY = p.y;
+    scratchLine(p.x, p.y, p.x + .01, p.y + .01);
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    if (!drawing || revealed) return;
+    var p = pos(e);
+    scratchLine(lastX, lastY, p.x, p.y);
+    lastX = p.x; lastY = p.y;
+    var now = Date.now();
+    if (now - lastCheck > 250) { lastCheck = now; if (cleared() > .45) reveal(); }
+  });
+  function end() {
+    if (!drawing) return;
+    drawing = false;
+    if (!revealed && started && cleared() > .45) reveal();
+  }
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+
+  /* ---------- 공개 ---------- */
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    fillResult();
+    canvas.classList.add('done');
+    document.body.classList.add('revealed-' + gender);
+    var isGirl = gender === 'girl';
+    $('afterTitle').textContent = isGirl ? '축하합니다, 딸이에요!' : '축하합니다, 아들이에요!';
+    $('afterText').textContent = CONFIG.family + '에게 ' + (isGirl ? '핑크빛' : '파란빛') + ' 소식이 왔어요. ' + CONFIG.message;
+    try { if (navigator.vibrate) navigator.vibrate([60, 40, 120]); } catch (_) {}
+    confetti();
+  }
+
+  $('skipBtn').addEventListener('click', function () { started = true; reveal(); });
+
+  $('replayBtn').addEventListener('click', function () {
+    revealed = false; started = false;
+    document.body.classList.remove('revealed-girl', 'revealed-boy');
+    canvas.classList.remove('done');
+    sizeCanvas();
+  });
+
+  /* ---------- 폭죽 ---------- */
+  var cc = $('confetti'), cctx = cc.getContext('2d'), pieces = [], raf = 0;
+  function confetti() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    cc.width = window.innerWidth; cc.height = window.innerHeight;
+    var palette = gender === 'girl'
+      ? ['#FF86AC', '#FFC2D6', '#FFFFFF', '#FFD166', '#E5484D']
+      : ['#5B9BFF', '#A9CBFF', '#FFFFFF', '#FFD166', '#2E6FE0'];
+    pieces = [];
+    for (var i = 0; i < 160; i++) {
+      var side = i % 2 ? 1 : -1;
+      pieces.push({
+        x: side === 1 ? cc.width + 10 : -10,
+        y: cc.height * (.55 + Math.random() * .25),
+        vx: -side * (4 + Math.random() * 9),
+        vy: -(9 + Math.random() * 11),
+        s: 6 + Math.random() * 7,
+        r: Math.random() * 6.28, vr: (Math.random() - .5) * .35,
+        c: palette[(Math.random() * palette.length) | 0]
+      });
+    }
+    cancelAnimationFrame(raf);
+    (function tick() {
+      cctx.clearRect(0, 0, cc.width, cc.height);
+      var alive = 0;
+      pieces.forEach(function (p) {
+        p.vy += .32; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        if (p.y < cc.height + 20) {
+          alive++;
+          cctx.save(); cctx.translate(p.x, p.y); cctx.rotate(p.r);
+          cctx.fillStyle = p.c; cctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+          cctx.restore();
+        }
+      });
+      if (alive) raf = requestAnimationFrame(tick); else cctx.clearRect(0, 0, cc.width, cc.height);
+    })();
+  }
+
+  /* ---------- 초기화 ---------- */
+  $('ticketNo').textContent = 'No.2026';
+  sizeCanvas();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { if (!started) paintFoil(); });
+  }
+  var rt;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () { if (!started && !revealed) sizeCanvas(); }, 150);
+  });
+})();
+</script>
+</body>
+</html>
